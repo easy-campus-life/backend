@@ -13,7 +13,7 @@ router = APIRouter(prefix="/events", tags=["events"])
 def create_event(event: EventCreate, db: Session = Depends(get_db)):
     """Créer un nouvel événement"""
     # Vérifier que la date de fin est après la date de début
-    if event.datefin < event.datedebut:
+    if event.date_end < event.date_start:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="La date de fin doit être après la date de début"
@@ -36,7 +36,7 @@ def get_events(
     query = db.query(Event)
     
     if category:
-        query = query.filter(Event.cat == category)
+        query = query.filter(Event.category == category)
     
     events = query.offset(skip).limit(limit).all()
     return events
@@ -56,7 +56,7 @@ def get_event(event_id: int, db: Session = Depends(get_db)):
 def get_upcoming_events(db: Session = Depends(get_db)):
     """Récupérer les événements à venir"""
     today = date.today()
-    events = db.query(Event).filter(Event.datedebut >= today).order_by(Event.datedebut).all()
+    events = db.query(Event).filter(Event.date_start >= today).order_by(Event.date_start).all()
     return events
 
 @router.put("/{event_id}", response_model=EventSchema)
@@ -71,20 +71,20 @@ def update_event(event_id: int, event_update: EventUpdate, db: Session = Depends
     
     # Vérifier les dates si elles sont fournies
     update_data = event_update.dict(exclude_unset=True)
-    if "datedebut" in update_data and "datefin" in update_data:
-        if update_data["datefin"] < update_data["datedebut"]:
+    if "date_start" in update_data and "date_end" in update_data:
+        if update_data["date_end"] < update_data["date_start"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="La date de fin doit être après la date de début"
             )
-    elif "datedebut" in update_data:
-        if db_event.datefin < update_data["datedebut"]:
+    elif "date_start" in update_data:
+        if db_event.date_end < update_data["date_start"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="La date de fin doit être après la date de début"
             )
-    elif "datefin" in update_data:
-        if update_data["datefin"] < db_event.datedebut:
+    elif "date_end" in update_data:
+        if update_data["date_end"] < db_event.date_start:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="La date de fin doit être après la date de début"
