@@ -230,11 +230,12 @@ def get_affluence_overview(
     # Affluence par salle
     classroom_affluence = db.query(
         Classroom.name.label('classroom_name'),
+        Classroom.capacity.label('capacity'),
         func.count(Presence.id).label('presence_count')
     ).join(Presence, Classroom.id == Presence.classroom_id).filter(
         func.date(Presence.timestamp).between(start_date, end_date),
         Presence.presence == True
-    ).group_by(Classroom.id, Classroom.name).order_by(func.count(Presence.id).desc()).all()
+    ).group_by(Classroom.id, Classroom.name, Classroom.capacity).order_by(func.count(Presence.id).desc()).all()
     
     return {
         "period": {
@@ -251,7 +252,12 @@ def get_affluence_overview(
             for day in daily_affluence
         ],
         "classroom_affluence": [
-            {"classroom_name": room.classroom_name, "presence_count": room.presence_count}
+            {
+                "classroom_name": room.classroom_name, 
+                "capacity": room.capacity,
+                "presence_count": room.presence_count,
+                "occupancy_percentage": round((room.presence_count / room.capacity) * 100, 2) if room.capacity > 0 else 0
+            }
             for room in classroom_affluence
         ]
     }
