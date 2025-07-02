@@ -80,7 +80,27 @@ backend/
 
 6. **Créer les tables**
    ```bash
-   python -c "from app.database import engine, Base; from app.models import User, Event, Mentor; Base.metadata.create_all(bind=engine)"
+   python -c "from app.database import engine, Base; from app.models import User, Event, Mentoring, Classroom, Presence; Base.metadata.create_all(bind=engine)"
+   ```
+
+### Option 2 : Installation avec Docker (Recommandée)
+
+1. **Cloner le projet**
+   ```bash
+   git clone <repository-url>
+   cd backend
+   ```
+
+2. **Déployer avec Docker Compose**
+   ```bash
+   docker-compose build
+   docker-compose up -d
+   ```
+
+3. **Vérifier le déploiement**
+   ```bash
+   docker-compose ps
+   curl http://localhost:8000/
    ```
 
 ## Lancement
@@ -298,13 +318,41 @@ L'application utilise PostgreSQL comme base de données principale.
 
 ```bash
 # Créer les tables
-python -c "from app.database import engine, Base; from app.models import User, Event, Mentor; Base.metadata.create_all(bind=engine)"
+python -c "from app.database import engine, Base; from app.models import User, Event, Mentoring, Classroom, Presence; Base.metadata.create_all(bind=engine)"
 
 # Se connecter à PostgreSQL
 psql postgres://postgres:password@localhost:5432/campus_db
 
 # Lancer l'API
 uvicorn main:app --reload
+```
+
+## Docker
+
+### Commandes Docker utiles :
+
+```bash
+# Construire l'image
+docker-compose build
+
+# Démarrer les services
+docker-compose up -d
+
+# Voir les logs
+docker-compose logs -f api
+docker-compose logs -f postgres
+
+# Arrêter les services
+docker-compose down
+
+# Redémarrer l'API
+docker-compose restart api
+
+# Voir l'état des services
+docker-compose ps
+
+# Nettoyer (supprimer volumes)
+docker-compose down -v
 ```
 
 ## Développement
