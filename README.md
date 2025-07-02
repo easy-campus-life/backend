@@ -170,6 +170,12 @@ L'API sera disponible sur `http://localhost:8000`
 - `PUT /presences/{presence_id}` - Modifier une présence
 - `DELETE /presences/{presence_id}` - Supprimer une présence
 
+### Analyse d'Affluence (`/presences/analytics`)
+- `GET /presences/analytics/overview` - Vue d'ensemble de l'affluence
+- `GET /presences/analytics/classroom/{classroom_id}/trends` - Tendances par salle
+- `GET /presences/analytics/real-time` - Affluence en temps réel
+- `GET /presences/analytics/peak-times` - Heures de pointe
+
 ## Modèles de données
 
 ### User
@@ -301,6 +307,42 @@ curl -X POST "http://localhost:8000/presences/" \
 ### Vérifier l'occupation d'une salle
 ```bash
 curl -X GET "http://localhost:8000/presences/classroom/1/occupancy"
+```
+
+### Analyser l'affluence globale
+```bash
+# Vue d'ensemble sur les 7 derniers jours
+curl -X GET "http://localhost:8000/presences/analytics/overview"
+
+# Vue d'ensemble sur une période spécifique
+curl -X GET "http://localhost:8000/presences/analytics/overview?start_date=2024-01-01&end_date=2024-01-31"
+```
+
+### Tendances d'affluence par salle
+```bash
+# Tendances sur 30 jours pour la salle 1
+curl -X GET "http://localhost:8000/presences/analytics/classroom/1/trends"
+
+# Tendances sur 7 jours
+curl -X GET "http://localhost:8000/presences/analytics/classroom/1/trends?days=7"
+```
+
+### Affluence en temps réel
+```bash
+# Occupation actuelle de toutes les salles
+curl -X GET "http://localhost:8000/presences/analytics/real-time"
+```
+
+### Heures de pointe
+```bash
+# Heures de pointe globales sur 30 jours
+curl -X GET "http://localhost:8000/presences/analytics/peak-times"
+
+# Heures de pointe pour une salle spécifique
+curl -X GET "http://localhost:8000/presences/analytics/peak-times?classroom_id=1"
+
+# Heures de pointe sur 7 jours
+curl -X GET "http://localhost:8000/presences/analytics/peak-times?days=7"
 ```
 
 ## Base de données
