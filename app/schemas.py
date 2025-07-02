@@ -41,7 +41,7 @@ class EventCreate(EventBase):
 class EventUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
-    cat: Optional[str] = None
+    category: Optional[str] = None
     attendance: Optional[str] = None
     place: Optional[str] = None
     date_start: Optional[date] = None
