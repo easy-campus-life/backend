@@ -3,17 +3,17 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.database import get_db
-from app.models.mentor import Mentor
+from app.models.mentoring import Mentoring
 from app.models.user import User
-from app.schemas import MentorCreate, MentorUpdate, Mentor as MentorSchema, MentorWithUsers
+from app.schemas import MentoringCreate, MentoringUpdate, Mentoring as MentoringSchema, MentoringWithUsers
 
-router = APIRouter(prefix="/mentors", tags=["mentors"])
+router = APIRouter(prefix="/mentoring", tags=["mentoring"])
 
-@router.post("/", response_model=MentorSchema, status_code=status.HTTP_201_CREATED)
-def create_mentor(mentor: MentorCreate, db: Session = Depends(get_db)):
+@router.post("/", response_model=MentoringSchema, status_code=status.HTTP_201_CREATED)
+def create_mentoring(mentoring: MentoringCreate, db: Session = Depends(get_db)):
     """Créer une nouvelle relation de mentorat"""
     # Vérifier que le mentor existe
-    mentor_user = db.query(User).filter(User.id == mentor.mentor_id).first()
+    mentor_user = db.query(User).filter(User.id == mentoring.mentor_id).first()
     if not mentor_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -21,7 +21,7 @@ def create_mentor(mentor: MentorCreate, db: Session = Depends(get_db)):
         )
     
     # Vérifier que l'étudiant sponsorisé existe
-    sponsored_user = db.query(User).filter(User.id == mentor.sponsored_id).first()
+    sponsored_user = db.query(User).filter(User.id == mentoring.sponsored_id).first()
     if not sponsored_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -29,47 +29,47 @@ def create_mentor(mentor: MentorCreate, db: Session = Depends(get_db)):
         )
     
     # Vérifier que le mentor et l'étudiant sont différents
-    if mentor.mentor_id == mentor.sponsored_id:
+    if mentoring.mentor_id == mentoring.sponsored_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Le mentor ne peut pas être son propre mentor"
         )
     
     # Vérifier qu'il n'y a pas déjà une relation de mentorat entre ces deux utilisateurs
-    existing_mentor = db.query(Mentor).filter(
-        Mentor.mentor_id == mentor.mentor_id,
-        Mentor.sponsored_id == mentor.sponsored_id
+    existing_mentoring = db.query(Mentoring).filter(
+        Mentoring.mentor_id == mentoring.mentor_id,
+        Mentoring.sponsored_id == mentoring.sponsored_id
     ).first()
-    if existing_mentor:
+    if existing_mentoring:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Une relation de mentorat existe déjà entre ces utilisateurs"
         )
     
-    db_mentor = Mentor(**mentor.dict())
-    db.add(db_mentor)
+    db_mentoring = Mentoring(**mentoring.dict())
+    db.add(db_mentoring)
     db.commit()
-    db.refresh(db_mentor)
-    return db_mentor
+    db.refresh(db_mentoring)
+    return db_mentoring
 
-@router.get("/", response_model=List[MentorWithUsers])
-def get_mentors(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+@router.get("/", response_model=List[MentoringWithUsers])
+def get_mentoring(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """Récupérer toutes les relations de mentorat"""
-    mentors = db.query(Mentor).offset(skip).limit(limit).all()
-    return mentors
+    mentoring = db.query(Mentoring).offset(skip).limit(limit).all()
+    return mentoring
 
-@router.get("/{mentor_id}", response_model=MentorWithUsers)
-def get_mentor(mentor_id: int, db: Session = Depends(get_db)):
+@router.get("/{mentoring_id}", response_model=MentoringWithUsers)
+def get_mentoring_by_id(mentoring_id: int, db: Session = Depends(get_db)):
     """Récupérer une relation de mentorat par son ID"""
-    mentor = db.query(Mentor).filter(Mentor.id == mentor_id).first()
-    if mentor is None:
+    mentoring = db.query(Mentoring).filter(Mentoring.id == mentoring_id).first()
+    if mentoring is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Relation de mentorat non trouvée"
         )
-    return mentor
+    return mentoring
 
-@router.get("/user/{user_id}/mentoring", response_model=List[MentorWithUsers])
+@router.get("/user/{user_id}/mentoring", response_model=List[MentoringWithUsers])
 def get_user_mentoring(user_id: int, db: Session = Depends(get_db)):
     """Récupérer tous les étudiants qu'un utilisateur mentore"""
     # Vérifier que l'utilisateur existe
@@ -80,10 +80,10 @@ def get_user_mentoring(user_id: int, db: Session = Depends(get_db)):
             detail="Utilisateur non trouvé"
         )
     
-    mentors = db.query(Mentor).filter(Mentor.mentor_id == user_id).all()
-    return mentors
+    mentoring = db.query(Mentoring).filter(Mentoring.mentor_id == user_id).all()
+    return mentoring
 
-@router.get("/user/{user_id}/sponsored", response_model=List[MentorWithUsers])
+@router.get("/user/{user_id}/sponsored", response_model=List[MentoringWithUsers])
 def get_user_sponsored(user_id: int, db: Session = Depends(get_db)):
     """Récupérer tous les mentors d'un utilisateur"""
     # Vérifier que l'utilisateur existe
@@ -94,20 +94,20 @@ def get_user_sponsored(user_id: int, db: Session = Depends(get_db)):
             detail="Utilisateur non trouvé"
         )
     
-    mentors = db.query(Mentor).filter(Mentor.sponsored_id == user_id).all()
-    return mentors
+    mentoring = db.query(Mentoring).filter(Mentoring.sponsored_id == user_id).all()
+    return mentoring
 
-@router.put("/{mentor_id}", response_model=MentorSchema)
-def update_mentor(mentor_id: int, mentor_update: MentorUpdate, db: Session = Depends(get_db)):
+@router.put("/{mentoring_id}", response_model=MentoringSchema)
+def update_mentoring(mentoring_id: int, mentoring_update: MentoringUpdate, db: Session = Depends(get_db)):
     """Mettre à jour une relation de mentorat"""
-    db_mentor = db.query(Mentor).filter(Mentor.id == mentor_id).first()
-    if db_mentor is None:
+    db_mentoring = db.query(Mentoring).filter(Mentoring.id == mentoring_id).first()
+    if db_mentoring is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Relation de mentorat non trouvée"
         )
     
-    update_data = mentor_update.dict(exclude_unset=True)
+    update_data = mentoring_update.dict(exclude_unset=True)
     
     # Vérifier les nouvelles relations si elles sont fournies
     if "mentor_id" in update_data:
@@ -127,8 +127,8 @@ def update_mentor(mentor_id: int, mentor_update: MentorUpdate, db: Session = Dep
             )
     
     # Vérifier que le mentor et l'étudiant sont différents
-    new_mentor_id = update_data.get("mentor_id", db_mentor.mentor_id)
-    new_sponsored_id = update_data.get("sponsored_id", db_mentor.sponsored_id)
+    new_mentor_id = update_data.get("mentor_id", db_mentoring.mentor_id)
+    new_sponsored_id = update_data.get("sponsored_id", db_mentoring.sponsored_id)
     if new_mentor_id == new_sponsored_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -136,22 +136,22 @@ def update_mentor(mentor_id: int, mentor_update: MentorUpdate, db: Session = Dep
         )
     
     for field, value in update_data.items():
-        setattr(db_mentor, field, value)
+        setattr(db_mentoring, field, value)
     
     db.commit()
-    db.refresh(db_mentor)
-    return db_mentor
+    db.refresh(db_mentoring)
+    return db_mentoring
 
-@router.delete("/{mentor_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_mentor(mentor_id: int, db: Session = Depends(get_db)):
+@router.delete("/{mentoring_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_mentoring(mentoring_id: int, db: Session = Depends(get_db)):
     """Supprimer une relation de mentorat"""
-    db_mentor = db.query(Mentor).filter(Mentor.id == mentor_id).first()
-    if db_mentor is None:
+    db_mentoring = db.query(Mentoring).filter(Mentoring.id == mentoring_id).first()
+    if db_mentoring is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Relation de mentorat non trouvée"
         )
     
-    db.delete(db_mentor)
+    db.delete(db_mentoring)
     db.commit()
     return None 
