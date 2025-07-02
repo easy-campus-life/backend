@@ -294,7 +294,7 @@ curl -X POST "http://localhost:8000/presences/" \
   -d '{
     "presence": true,
     "classroom_id": 1,
-    "user_id": 1
+    "email": "john@example.com"
   }'
 ```
 
