@@ -15,5 +15,6 @@ class User(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relations
-    mentor_relationships = relationship("Mentor", foreign_keys="Mentor.mentor_id", back_populates="mentor")
-    sponsored_relationships = relationship("Mentor", foreign_keys="Mentor.sponsored_id", back_populates="sponsored") 
+    mentor_relationships = relationship("Mentoring", foreign_keys="Mentoring.mentor_id", back_populates="mentor")
+    sponsored_relationships = relationship("Mentoring", foreign_keys="Mentoring.sponsored_id", back_populates="sponsored")
+    presences = relationship("Presence", back_populates="user") 

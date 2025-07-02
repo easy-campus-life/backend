@@ -17,12 +17,21 @@ backend/
 │   │   ├── __init__.py
 │   │   ├── user.py            # Modèle User
 │   │   ├── event.py           # Modèle Event
-│   │   └── mentor.py          # Modèle Mentor
+│   │   ├── mentoring.py       # Modèle Mentoring
+│   │   ├── classroom.py       # Modèle Classroom
+│   │   └── presence.py        # Modèle Presence
 │   ├── routes/
 │   │   ├── __init__.py
+│   │   ├── auth.py            # Routes d'authentification
 │   │   ├── users.py           # Routes pour les utilisateurs
 │   │   ├── events.py          # Routes pour les événements
-│   │   └── mentors.py         # Routes pour le mentorat
+│   │   ├── mentoring.py       # Routes pour le mentorat
+│   │   ├── classrooms.py      # Routes pour les salles de classe
+│   │   └── presences.py       # Routes pour les présences
+│   ├── utils/
+│   │   ├── __init__.py
+│   │   ├── auth.py            # Utilitaires d'authentification
+│   │   └── helpers.py         # Utilitaires génériques
 │   ├── __init__.py
 │   ├── database.py            # Configuration PostgreSQL
 │   └── schemas.py             # Schémas Pydantic
@@ -93,6 +102,13 @@ L'API sera disponible sur `http://localhost:8000`
 
 ## Endpoints disponibles
 
+### Authentification (`/auth`)
+- `POST /auth/register` - S'inscrire
+- `POST /auth/login` - Se connecter (form-data)
+- `POST /auth/login-json` - Se connecter (JSON)
+- `GET /auth/me` - Obtenir ses informations
+- `PUT /auth/me` - Modifier ses informations
+
 ### Utilisateurs (`/users`)
 - `POST /users/` - Créer un utilisateur
 - `GET /users/` - Lister tous les utilisateurs
@@ -108,14 +124,31 @@ L'API sera disponible sur `http://localhost:8000`
 - `PUT /events/{event_id}` - Modifier un événement
 - `DELETE /events/{event_id}` - Supprimer un événement
 
-### Mentorat (`/mentors`)
-- `POST /mentors/` - Créer une relation de mentorat
-- `GET /mentors/` - Lister toutes les relations
-- `GET /mentors/{mentor_id}` - Récupérer une relation
-- `GET /mentors/user/{user_id}/mentoring` - Étudiants mentés par un utilisateur
-- `GET /mentors/user/{user_id}/sponsored` - Mentors d'un utilisateur
-- `PUT /mentors/{mentor_id}` - Modifier une relation
-- `DELETE /mentors/{mentor_id}` - Supprimer une relation
+### Mentorat (`/mentoring`)
+- `POST /mentoring/` - Créer une relation de mentorat
+- `GET /mentoring/` - Lister toutes les relations
+- `GET /mentoring/{mentoring_id}` - Récupérer une relation
+- `GET /mentoring/user/{user_id}/mentoring` - Étudiants mentés par un utilisateur
+- `GET /mentoring/user/{user_id}/sponsored` - Mentors d'un utilisateur
+- `PUT /mentoring/{mentoring_id}` - Modifier une relation
+- `DELETE /mentoring/{mentoring_id}` - Supprimer une relation
+
+### Salles de classe (`/classrooms`)
+- `POST /classrooms/` - Créer une salle de classe
+- `GET /classrooms/` - Lister toutes les salles
+- `GET /classrooms/{classroom_id}` - Récupérer une salle
+- `GET /classrooms/{classroom_id}/with-presences` - Salle avec présences
+- `PUT /classrooms/{classroom_id}` - Modifier une salle
+- `DELETE /classrooms/{classroom_id}` - Supprimer une salle
+
+### Présences (`/presences`)
+- `POST /presences/` - Enregistrer une présence
+- `GET /presences/` - Lister les présences (avec filtres)
+- `GET /presences/{presence_id}` - Récupérer une présence
+- `GET /presences/classroom/{classroom_id}/occupancy` - Occupation d'une salle
+- `GET /presences/user/{user_id}/history` - Historique d'un utilisateur
+- `PUT /presences/{presence_id}` - Modifier une présence
+- `DELETE /presences/{presence_id}` - Supprimer une présence
 
 ## Modèles de données
 
@@ -136,14 +169,54 @@ L'API sera disponible sur `http://localhost:8000`
 - `datedebut` (DATE)
 - `datefin` (DATE)
 
-### Mentor
+### Mentoring
 - `id` (INT, PK)
 - `mentor_id` (INT, FK vers User)
 - `sponsored_id` (INT, FK vers User)
 - `subject` (VARCHAR)
 - `description` (TEXT)
 
+### Classroom
+- `id` (INT, PK)
+- `name` (VARCHAR)
+- `capacity` (INT)
+
+### Presence
+- `id` (INT, PK)
+- `presence` (BOOLEAN)
+- `classroom_id` (INT, FK vers Classroom)
+- `user_id` (INT, FK vers User)
+- `timestamp` (DATETIME)
+
 ## Exemples d'utilisation
+
+### S'inscrire
+```bash
+curl -X POST "http://localhost:8000/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Doe",
+    "email": "john@example.com",
+    "password": "password123",
+    "level": "étudiant"
+  }'
+```
+
+### Se connecter
+```bash
+curl -X POST "http://localhost:8000/auth/login-json" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "password": "password123"
+  }'
+```
+
+### Obtenir ses informations (avec token)
+```bash
+curl -X GET "http://localhost:8000/auth/me" \
+  -H "Authorization: Bearer YOUR_TOKEN_HERE"
+```
 
 ### Créer un utilisateur
 ```bash
@@ -174,7 +247,7 @@ curl -X POST "http://localhost:8000/events/" \
 
 ### Créer une relation de mentorat
 ```bash
-curl -X POST "http://localhost:8000/mentors/" \
+curl -X POST "http://localhost:8000/mentoring/" \
   -H "Content-Type: application/json" \
   -d '{
     "mentor_id": 1,
@@ -182,6 +255,32 @@ curl -X POST "http://localhost:8000/mentors/" \
     "subject": "Mathématiques",
     "description": "Aide en calcul différentiel"
   }'
+```
+
+### Créer une salle de classe
+```bash
+curl -X POST "http://localhost:8000/classrooms/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Amphithéâtre A",
+    "capacity": 150
+  }'
+```
+
+### Enregistrer une présence
+```bash
+curl -X POST "http://localhost:8000/presences/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "presence": true,
+    "classroom_id": 1,
+    "user_id": 1
+  }'
+```
+
+### Vérifier l'occupation d'une salle
+```bash
+curl -X GET "http://localhost:8000/presences/classroom/1/occupancy"
 ```
 
 ## Base de données

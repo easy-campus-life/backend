@@ -1,21 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-from passlib.context import CryptContext
-
 from app.database import get_db
 from app.models.user import User
-from app.schemas import UserCreate, UserUpdate, User as UserSchema
+from app.schemas import UserCreate, UserUpdate, User as UserSchema, UserResponse
+from app.utils.auth import get_current_user, get_password_hash
 
 router = APIRouter(prefix="/users", tags=["users"])
 
-# Configuration pour le hachage des mots de passe
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-def get_password_hash(password: str):
-    return pwd_context.hash(password)
-
-@router.post("/", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
     """Créer un nouvel utilisateur"""
     # Vérifier si l'email existe déjà
@@ -39,13 +32,13 @@ def create_user(user: UserCreate, db: Session = Depends(get_db)):
     db.refresh(db_user)
     return db_user
 
-@router.get("/", response_model=List[UserSchema])
+@router.get("/", response_model=List[UserResponse])
 def get_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """Récupérer tous les utilisateurs"""
     users = db.query(User).offset(skip).limit(limit).all()
     return users
 
-@router.get("/{user_id}", response_model=UserSchema)
+@router.get("/{user_id}", response_model=UserResponse)
 def get_user(user_id: int, db: Session = Depends(get_db)):
     """Récupérer un utilisateur par son ID"""
     user = db.query(User).filter(User.id == user_id).first()
@@ -56,7 +49,7 @@ def get_user(user_id: int, db: Session = Depends(get_db)):
         )
     return user
 
-@router.put("/{user_id}", response_model=UserSchema)
+@router.put("/{user_id}", response_model=UserResponse)
 def update_user(user_id: int, user_update: UserUpdate, db: Session = Depends(get_db)):
     """Mettre à jour un utilisateur"""
     db_user = db.query(User).filter(User.id == user_id).first()

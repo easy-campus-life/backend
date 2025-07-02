@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine
-from app.models import User, Event, Mentor
-from app.routes import users, events, mentors
+from app.models import User, Event, Mentoring, Classroom, Presence
+from app.routes import users, events, mentoring, auth, classrooms, presences
 
 # Créer les tables dans la base de données
 from app.database import Base
@@ -25,9 +25,12 @@ app.add_middleware(
 )
 
 # Inclure les routes
+app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(events.router)
-app.include_router(mentors.router)
+app.include_router(mentoring.router)
+app.include_router(classrooms.router)
+app.include_router(presences.router)
 
 @app.get("/")
 def read_root():
@@ -36,9 +39,12 @@ def read_root():
         "message": "Bienvenue sur l'API Campus Life",
         "version": "1.0.0",
         "endpoints": {
+            "auth": "/auth",
             "users": "/users",
             "events": "/events", 
-            "mentors": "/mentors",
+            "mentoring": "/mentoring",
+            "classrooms": "/classrooms",
+            "presences": "/presences",
             "docs": "/docs"
         }
     }
