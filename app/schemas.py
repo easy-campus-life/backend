@@ -110,8 +110,10 @@ class PresenceBase(BaseModel):
     classroom_id: int
     user_id: int
 
-class PresenceCreate(PresenceBase):
-    pass
+class PresenceCreate(BaseModel):
+    presence: bool = True
+    classroom_id: int
+    email: str  # Utiliser l'email au lieu du user_id
 
 class PresenceUpdate(BaseModel):
     presence: Optional[bool] = None
