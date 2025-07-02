@@ -24,19 +24,19 @@ def create_presence(presence: PresenceCreate, db: Session = Depends(get_db)):
             detail="Salle de classe non trouvée"
         )
     
-    # Vérifier que l'utilisateur existe
-    user = db.query(User).filter(User.id == presence.user_id).first()
+    # Chercher l'utilisateur par email
+    user = db.query(User).filter(User.email == presence.email).first()
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Utilisateur non trouvé"
+            detail=f"Utilisateur avec l'email {presence.email} non trouvé"
         )
     
     # Vérifier qu'il n'y a pas déjà une présence pour cet utilisateur dans cette salle aujourd'hui
     today = date.today()
     existing_presence = db.query(Presence).filter(
         Presence.classroom_id == presence.classroom_id,
-        Presence.user_id == presence.user_id,
+        Presence.user_id == user.id,
         func.date(Presence.timestamp) == today
     ).first()
     
@@ -46,7 +46,12 @@ def create_presence(presence: PresenceCreate, db: Session = Depends(get_db)):
             detail="Une présence existe déjà pour cet utilisateur dans cette salle aujourd'hui"
         )
     
-    db_presence = Presence(**presence.dict())
+    # Créer la présence avec le user_id trouvé
+    db_presence = Presence(
+        presence=presence.presence,
+        classroom_id=presence.classroom_id,
+        user_id=user.id
+    )
     db.add(db_presence)
     db.commit()
     db.refresh(db_presence)
