@@ -32,6 +32,7 @@ class EventBase(BaseModel):
     category: str
     attendance: Optional[str] = None
     place: str
+    image_url: Optional[str] = None
     date_start: date
     date_end: date
 
@@ -44,6 +45,7 @@ class EventUpdate(BaseModel):
     category: Optional[str] = None
     attendance: Optional[str] = None
     place: Optional[str] = None
+    image_url: Optional[str] = None
     date_start: Optional[date] = None
     date_end: Optional[date] = None
 
@@ -150,4 +152,34 @@ class PresenceWithDetails(Presence):
     user: UserResponse
 
 class ClassroomWithPresences(Classroom):
-    presences: List[Presence] = [] 
+    presences: List[Presence] = []
+
+# Schemas pour EventParticipation
+class EventParticipationBase(BaseModel):
+    event_id: int
+    is_attending: bool = True
+
+class EventParticipationCreate(BaseModel):
+    event_id: int
+    email: str  # Utiliser l'email au lieu du user_id
+
+class EventParticipationUpdate(BaseModel):
+    is_attending: Optional[bool] = None
+
+class EventParticipation(EventParticipationBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+    
+    class Config:
+        from_attributes = True
+
+# Schemas pour les réponses avec relations
+class EventParticipationWithDetails(EventParticipation):
+    event: Event
+    user: UserResponse
+
+class EventWithParticipations(Event):
+    participations: List[EventParticipation] = []
+    participant_count: int = 0 

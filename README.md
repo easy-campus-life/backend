@@ -176,6 +176,16 @@ L'API sera disponible sur `http://localhost:8000`
 - `GET /presences/analytics/real-time` - Affluence en temps réel
 - `GET /presences/analytics/peak-times` - Heures de pointe
 
+### Participations aux Événements (`/event-participations`)
+- `POST /event-participations/` - Participer à un événement
+- `GET /event-participations/` - Lister les participations (avec filtres)
+- `GET /event-participations/event/{event_id}/participants` - Participants d'un événement
+- `GET /event-participations/event/{event_id}/participant-count` - Nombre de participants
+- `GET /event-participations/user/{user_id}/events` - Événements d'un utilisateur
+- `PUT /event-participations/{participation_id}` - Modifier une participation
+- `DELETE /event-participations/{participation_id}` - Supprimer une participation
+- `POST /event-participations/{event_id}/cancel` - Annuler sa participation
+
 ## Modèles de données
 
 ### User
@@ -187,13 +197,14 @@ L'API sera disponible sur `http://localhost:8000`
 
 ### Event
 - `id` (INT, PK)
-- `titre` (VARCHAR)
-- `desc` (TEXT)
-- `cat` (VARCHAR)
+- `title` (VARCHAR)
+- `description` (TEXT)
+- `category` (VARCHAR)
 - `attendance` (VARCHAR)
-- `lieu` (VARCHAR)
-- `datedebut` (DATE)
-- `datefin` (DATE)
+- `place` (VARCHAR)
+- `image_url` (VARCHAR, nullable) - URL de l'image de l'événement
+- `date_start` (DATE)
+- `date_end` (DATE)
 
 ### Mentoring
 - `id` (INT, PK)
@@ -213,6 +224,14 @@ L'API sera disponible sur `http://localhost:8000`
 - `classroom_id` (INT, FK vers Classroom)
 - `user_id` (INT, FK vers User)
 - `timestamp` (DATETIME)
+
+### EventParticipation
+- `id` (INT, PK)
+- `event_id` (INT, FK vers Event)
+- `user_id` (INT, FK vers User)
+- `is_attending` (BOOLEAN, default: True)
+- `created_at` (DATETIME)
+- `updated_at` (DATETIME)
 
 ## Exemples d'utilisation
 
@@ -261,13 +280,14 @@ curl -X POST "http://localhost:8000/users/" \
 curl -X POST "http://localhost:8000/events/" \
   -H "Content-Type: application/json" \
   -d '{
-    "titre": "Conférence IA",
-    "desc": "Introduction à l\'intelligence artificielle",
-    "cat": "conférence",
+    "title": "Conférence IA",
+    "description": "Introduction à l\'intelligence artificielle",
+    "category": "conférence",
     "attendance": "50",
-    "lieu": "Amphithéâtre A",
-    "datedebut": "2024-01-15",
-    "datefin": "2024-01-15"
+    "place": "Amphithéâtre A",
+    "image_url": "https://example.com/images/ai-conference.jpg",
+    "date_start": "2024-01-15",
+    "date_end": "2024-01-15"
   }'
 ```
 
@@ -344,6 +364,35 @@ curl -X GET "http://localhost:8000/presences/analytics/peak-times?classroom_id=1
 # Heures de pointe sur 7 jours
 curl -X GET "http://localhost:8000/presences/analytics/peak-times?days=7"
 ```
+
+### Participer à un événement
+```bash
+curl -X POST "http://localhost:8000/event-participations/" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event_id": 1,
+    "email": "john@example.com"
+  }'
+```
+
+### Voir les participants d'un événement
+```bash
+curl -X GET "http://localhost:8000/event-participations/event/1/participants"
+```
+
+### Obtenir le nombre de participants
+```bash
+curl -X GET "http://localhost:8000/event-participations/event/1/participant-count"
+```
+
+### Voir les événements d'un utilisateur
+```bash
+curl -X GET "http://localhost:8000/event-participations/user/1/events"
+```
+
+### Annuler sa participation
+```bash
+curl -X POST "http://localhost:8000/event-participations/1/cancel?email=john@example.com"
 
 ## Base de données
 

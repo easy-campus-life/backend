@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine
-from app.models import User, Event, Mentoring, Classroom, Presence
-from app.routes import users, events, mentoring, auth, classrooms, presences
+from app.models import User, Event, Mentoring, Classroom, Presence, EventParticipation
+from app.routes import users, events, mentoring, auth, classrooms, presences, event_participations
 
 # Créer les tables dans la base de données
 from app.database import Base
@@ -31,6 +31,7 @@ app.include_router(events.router)
 app.include_router(mentoring.router)
 app.include_router(classrooms.router)
 app.include_router(presences.router)
+app.include_router(event_participations.router)
 
 @app.get("/")
 def read_root():
@@ -45,6 +46,7 @@ def read_root():
             "mentoring": "/mentoring",
             "classrooms": "/classrooms",
             "presences": "/presences",
+            "event-participations": "/event-participations",
             "docs": "/docs"
         }
     }
