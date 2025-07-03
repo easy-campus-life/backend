@@ -25,5 +25,5 @@ EXPOSE 8000
 # Variable d'environnement pour FastAPI
 ENV PYTHONPATH=/app
 
-# Commande par défaut pour démarrer l'application avec migrations automatiques
-CMD alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 
+# Commande par défaut pour démarrer l'application (migrations temporairement désactivées)
+CMD uvicorn main:app --host 0.0.0.0 --port 8000 
